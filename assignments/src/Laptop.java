@@ -90,6 +90,7 @@ class RAM {
         Size = size;
     }
 }
+
 class HDD
 {
     String size;

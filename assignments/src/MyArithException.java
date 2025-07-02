@@ -18,6 +18,7 @@ class Calculator
         return input;
     }
 }
+
 class MyCalcApp
 {
     public static void main(String[] args)  {

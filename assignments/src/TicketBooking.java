@@ -7,7 +7,6 @@ class BookingTask implements Runnable {
     public BookingTask(int bookingId) {
         this.bookingId = bookingId;
     }
-
     @Override
     public void run() {
         System.out.println("Booking " + bookingId + " received");
@@ -26,7 +25,7 @@ class BookingTask implements Runnable {
 
  class TicketBookingSystem {
     public static void main(String[] args) {
-        int numberOfThreads = 3;  // Limit concurrency to 3
+        int numberOfThreads = 3;
         int numberOfBookings = 5;
 
         ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);

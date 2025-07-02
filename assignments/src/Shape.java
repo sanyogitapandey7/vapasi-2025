@@ -4,6 +4,7 @@ public abstract class Shape {
     abstract double calculateArea();
     abstract double calculatePerimeter();
 }
+
 class Circle extends Shape
 {
     double radius;
