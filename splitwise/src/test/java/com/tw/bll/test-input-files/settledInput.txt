@@ -1,0 +1,3 @@
+A spent 200 for Snacks for B, C
+B spent 200 for coffee for A, C
+C spent 200 for bus for A, B

@@ -2,38 +2,55 @@ package com.tw.dao;
 
 import com.tw.entity.Expense;
 import com.tw.entity.Transaction;
+import com.tw.util.AppConstants;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
+
 public class SplitwiseDAOImpl implements SplitwiseDAO {
-   private static final Pattern EXPENSE_PATTERN = Pattern.compile("(\\w+) spent (\\d+) for (.*?) for ([A-Z](?:, [A-Z])*)");
+    private static final Logger logger = Logger.getLogger(SplitwiseDAOImpl.class.getName());
 
     public SplitwiseDAOImpl() {
     }
 
     @Override
     public List<Expense> readExpensesFromFile(String filePath) {
+        List<Expense> expenses = new ArrayList<>();
+
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            return reader.lines()
-                    .map(this::parseExpenseLine)
-                    .filter(java.util.Objects::nonNull)
-                    .collect(Collectors.toList());
+            String line;
+            int i = 0;
+
+            while ((line = reader.readLine()) != null) {
+                Matcher matcher = AppConstants.ExpenseInputPattern.matcher(line.trim());
+                if (matcher.matches()) {
+                    i++;
+                    Expense expense = parseExpenseLine(line); // If invalid, this throws and aborts
+                    expenses.add(expense);
+                } else {
+                    throw new IOException(AppConstants.ErrorReadingFile);
+                }
+            }
         } catch (IOException e) {
-            System.err.println("Error reading input file: " + e.getMessage());
-            return new ArrayList<>();
+            logger.log(Level.SEVERE, AppConstants.ErrorReadingFile, e);
         }
+
+        return expenses;
     }
+
 
     @Override
     public List<Transaction> settleExpenses(List<Expense> expenses) {
         Map<String, Double> balanceMap = new HashMap<>();
-         for (Expense expense : expenses) {
+        for (Expense expense : expenses) {
             double share = expense.getAmount() / expense.getParticipants().size();
             for (String participant : expense.getParticipants()) {
                 balanceMap.put(participant, balanceMap.getOrDefault(participant, 0.0) - share);
@@ -67,16 +84,16 @@ public class SplitwiseDAOImpl implements SplitwiseDAO {
             debtor.setValue(debtor.getValue() + settleAmount);
             creditor.setValue(creditor.getValue() - settleAmount);
 
-            if (Math.abs(debtor.getValue()) < 0.01) i++;
-            if (Math.abs(creditor.getValue()) < 0.01) j++;
+            if (Math.abs(debtor.getValue()) < AppConstants.PrecisionValue) i++;
+            if (Math.abs(creditor.getValue()) < AppConstants.PrecisionValue) j++;
         }
 
         return transactions;
     }
 
 
-    private Expense parseExpenseLine(String line) {
-        Matcher matcher = EXPENSE_PATTERN.matcher(line);
+    private Expense parseExpenseLine(String line) throws IOException {
+        Matcher matcher = AppConstants.ExpenseInputPattern.matcher(line);
         if (matcher.find()) {
             String payer = matcher.group(1);
             double amount = Double.parseDouble(matcher.group(2));
@@ -86,9 +103,9 @@ public class SplitwiseDAOImpl implements SplitwiseDAO {
                     .collect(Collectors.toList());
             return new Expense(payer, amount, participants, description);
         } else {
-            System.err.println("Warning: Could not parse expense line: " + line);
-            return null;
+            throw new IOException(AppConstants.InvalidInputMessage);
         }
     }
+
 
 }
